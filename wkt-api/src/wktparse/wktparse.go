@@ -27,6 +27,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+  "reflect"
 )
 
 type Coordinate struct {
@@ -48,12 +49,13 @@ type WKT struct {
 }
 
 func ParseGeometry(WKTString string) (string, CoordinateSet) {
+
 	var WKType string
 	var Geometries CoordinateSet
 	if strings.HasPrefix(WKTString, "POINT") {
 		WKType, Geometries = Point(WKTString)
 	} else if strings.HasPrefix(WKTString, "LINESTRING") {
-		//Geometries = Point(WKTString)
+		WKType, Geometries = Line(WKTString)
 	} else if strings.HasPrefix(WKTString, "POLYGON") {
 		//Geometries = Point(WKTString)
 	} else if strings.HasPrefix(WKTString, "MULTIPOINT") {
@@ -65,6 +67,7 @@ func ParseGeometry(WKTString string) (string, CoordinateSet) {
 	}
 
 	return WKType, Geometries
+
 }
 
 // POINT, POINT M, POINT Z, POINT ZM
@@ -82,9 +85,7 @@ func Point(WKTString string) (string, CoordinateSet) {
 	var wkttype string
 	coordinateset := Coordinate{}
 
-	///	fmt.Println(WKTString)
 	if strings.HasPrefix(WKTString, "POINT Z") && !strings.HasPrefix(WKTString, "POINT ZM") {
-		fmt.Print(WKTString)
 		wkttype = "POINT Z"
 		coordinateset = Coordinate{X: coords[0], Y: coords[1], Z: coords[2]}
 	} else if strings.HasPrefix(WKTString, "POINT M") {
@@ -94,7 +95,6 @@ func Point(WKTString string) (string, CoordinateSet) {
 		wkttype = "POINT ZM"
 		coordinateset = Coordinate{X: coords[0], Y: coords[1], Z: coords[2], M: coords[3]}
 	} else {
-		fmt.Print("ELSE")
 		wkttype = "POINT"
 		coordinateset = Coordinate{X: coords[0], Y: coords[1]}
 	}
@@ -108,10 +108,11 @@ func Line(WKTString string) (string, CoordinateSet) {
 
 	coordinateset := CoordinateSet{}
 	var wkttype string
+
 	if strings.HasPrefix(WKTString, "LINESTRING Z") && !strings.HasPrefix(WKTString, "LINESTRING ZM") {
 		wkttype = "LINESTRING Z"
 	} else if strings.HasPrefix(WKTString, "LINESTRING M") {
-		wkttype = "LINESTRING Z"
+		wkttype = "LINESTRING M"
 	} else if strings.HasPrefix(WKTString, "LINESTRING ZM") {
 		wkttype = "LINESTRING ZM"
 	} else {
@@ -119,17 +120,30 @@ func Line(WKTString string) (string, CoordinateSet) {
 	}
 
 	lineparts := strings.Split(RemoveWrappingGeom(WKTString), ",")
+
+	// For each part of the line
 	for _, l := range lineparts {
+
+		l = strings.TrimSpace(l)
 		line := strings.Split(l, " ")
 		var coords []float64
 
+		// For each coordinate in the line
 		for _, c := range line {
-			if f, err := strconv.ParseFloat(c, 64); err == nil {
-				coords = append(coords, f)
+			c = strings.TrimSpace(c)
+			if c != " " || c != "" {
+				if f, err := strconv.ParseFloat(c, 64); err == nil {
+					coords = append(coords, f)
+				} else {
+					fmt.Print("Error converting ", c, "to float64", " ", reflect.TypeOf(c), "\n ")
+				}
 			}
+		}
+
+		if (len(coords) > 0) {
 
 			if wkttype == "LINESTRING Z" {
-				coordinateset.Coordinates = append(coordinateset.Coordinates, (Coordinate{X: coords[0], Y: coords[1], Z: coords[2]}))
+				coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1], Z: coords[2]})
 			} else if wkttype == "LINESTRING M" {
 				coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1], M: coords[2]})
 			} else if wkttype == "LINESTRING ZM" {
@@ -137,12 +151,72 @@ func Line(WKTString string) (string, CoordinateSet) {
 			} else if wkttype == "LINESTRING" {
 				coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1]})
 			}
+		} else {
+			fmt.Print("Not enough coordinates in this line :", WKTString)
 		}
 
 	}
 
 	return wkttype, coordinateset
 }
+
+//LINESTRING (30 10, 10 30, 40 40)
+func Polygon(WKTString string) (string, CoordinateSet) {
+
+	// coordinateset := CoordinateSet{}
+	// var wkttype string
+	//
+	// if strings.HasPrefix(WKTString, "LINESTRING Z") && !strings.HasPrefix(WKTString, "LINESTRING ZM") {
+	// 	wkttype = "LINESTRING Z"
+	// } else if strings.HasPrefix(WKTString, "LINESTRING M") {
+	// 	wkttype = "LINESTRING M"
+	// } else if strings.HasPrefix(WKTString, "LINESTRING ZM") {
+	// 	wkttype = "LINESTRING ZM"
+	// } else {
+	// 	wkttype = "LINESTRING"
+	// }
+	//
+	// lineparts := strings.Split(RemoveWrappingGeom(WKTString), ",")
+	//
+	// // For each part of the line
+	// for _, l := range lineparts {
+	//
+	// 	l = strings.TrimSpace(l)
+	// 	line := strings.Split(l, " ")
+	// 	var coords []float64
+	//
+	// 	// For each coordinate in the line
+	// 	for _, c := range line {
+	// 		c = strings.TrimSpace(c)
+	// 		if c != " " || c != "" {
+	// 			if f, err := strconv.ParseFloat(c, 64); err == nil {
+	// 				coords = append(coords, f)
+	// 			} else {
+	// 				fmt.Print("Error converting ", c, "to float64", " ", reflect.TypeOf(c), "\n ")
+	// 			}
+	// 		}
+	// 	}
+	//
+	// 	if (len(coords) > 0) {
+	//
+	// 		if wkttype == "LINESTRING Z" {
+	// 			coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1], Z: coords[2]})
+	// 		} else if wkttype == "LINESTRING M" {
+	// 			coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1], M: coords[2]})
+	// 		} else if wkttype == "LINESTRING ZM" {
+	// 			coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1], Z: coords[2], M: coords[3]})
+	// 		} else if wkttype == "LINESTRING" {
+	// 			coordinateset.Coordinates = append(coordinateset.Coordinates, Coordinate{X: coords[0], Y: coords[1]})
+	// 		}
+	// 	} else {
+	// 		fmt.Print("Not enough coordinates in this line :", WKTString)
+	// 	}
+	//
+	// }
+	//
+	// return wkttype, coordinateset
+}
+
 
 func RemoveWrappingGeom(str string) string {
 	return str[strings.Index(str, "(")+1 : strings.LastIndex(str, ")")]

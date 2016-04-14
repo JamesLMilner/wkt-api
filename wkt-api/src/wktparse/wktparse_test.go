@@ -3,6 +3,7 @@ package wktparse
 import "testing"
 import "strconv"
 import "strings"
+//import "log"
 
 func TestRemoveWrappingGeom(t *testing.T) {
 	var wktone string
@@ -131,6 +132,7 @@ func TestPointZM(t *testing.T) {
 }
 
 func TestLine(t *testing.T) {
+
 	var line string = "LINESTRING (30 10, 10 30, 40 40)"
 	linetype, linewkt := ParseGeometry(line)
 
@@ -141,14 +143,104 @@ func TestLine(t *testing.T) {
 		t.Error("Expected LINESTRING got", linetype)
 	}
 
-	if len(linewkt.Coordinates) != 1 {
+	if len(linewkt.Coordinates) < 1 {
 		t.Error("Line does not have at least 1 pair of coordinates, has ", strconv.Itoa(len(linewkt.Coordinates)))
 	} else {
 		if linewkt.Coordinates[0].X != 30.0 {
-			t.Error("Expected X to be 123.45 got ", linewkt.Coordinates[0].X)
+			t.Error("Expected X to be 30.0 got ", linewkt.Coordinates[0].X)
 		}
 		if linewkt.Coordinates[0].Y != 10.0 {
-			t.Error("Expected Y to be 543.21 got ", linewkt.Coordinates[0].Y)
+			t.Error("Expected Y to be 5.0 got ", linewkt.Coordinates[0].Y)
+		}
+	}
+
+}
+
+func TestLineZ(t *testing.T) {
+
+	var line string = "LINESTRING Z (30 10 5, 10 30 5, 40 40 5)"
+	linetype, linewkt := ParseGeometry(line)
+
+	if strings.HasPrefix(line, "LINESTRING Z") == false {
+		t.Error("String was not prefixed with LINESTRING Z")
+	}
+	if linetype != "LINESTRING Z" {
+		t.Error("Expected LINESTRING got Z", linetype)
+	}
+
+	if len(linewkt.Coordinates) < 1 {
+		t.Error("Line does not have at least 1 pair of coordinates, has ", strconv.Itoa(len(linewkt.Coordinates)))
+	} else {
+		if linewkt.Coordinates[0].X != 30.0 {
+			t.Error("Expected X to be 30.0 got ", linewkt.Coordinates[0].X)
+		}
+		if linewkt.Coordinates[0].Y != 10.0 {
+			t.Error("Expected Y to be 10.0 got ", linewkt.Coordinates[0].Y)
+		}
+		if linewkt.Coordinates[0].Z != 5 {
+			t.Error("Expected X to be 5.0 got ", linewkt.Coordinates[0].Z)
+		}
+	}
+
+}
+
+func TestLineM(t *testing.T) {
+
+	var line string = "LINESTRING M (30 10 10, 10 30 9, 40 40 8)"
+	linetype, linewkt := ParseGeometry(line)
+
+	if strings.HasPrefix(line, "LINESTRING M") == false {
+		t.Error("String was not prefixed with LINESTRING M")
+	}
+	if linetype != "LINESTRING M" {
+		t.Error("Expected LINESTRING M got ", linetype)
+	}
+
+	if len(linewkt.Coordinates) < 1 {
+		t.Error("Line does not have at least 1 pair of coordinates, has ", strconv.Itoa(len(linewkt.Coordinates)))
+	} else {
+		if linewkt.Coordinates[0].X != 30.0 {
+			t.Error("Expected X to be 30.0 got ", linewkt.Coordinates[0].X)
+		}
+		if linewkt.Coordinates[0].Y != 10.0 {
+			t.Error("Expected Y to be 10.0 got ", linewkt.Coordinates[0].Y)
+		}
+		if linewkt.Coordinates[0].Z != 0.0 {
+			t.Error("Expected Z to be 0.0 got ", linewkt.Coordinates[0].Z)
+		}
+		if linewkt.Coordinates[0].M != 10.0 {
+			t.Error("Expected M to be 10.0 got ", linewkt.Coordinates[0].M)
+		}
+	}
+
+}
+
+func TestLineZM(t *testing.T) {
+
+	var line string = "LINESTRING ZM (30 10 5 10, 10 30 5 9, 40 40 5 8)"
+	linetype, linewkt := ParseGeometry(line)
+
+	if strings.HasPrefix(line, "LINESTRING ZM") == false {
+		t.Error("String was not prefixed with LINESTRING ZM")
+	}
+	if linetype != "LINESTRING ZM" {
+		t.Error("Expected LINESTRING got ZM", linetype)
+	}
+
+	if len(linewkt.Coordinates) < 1 {
+		t.Error("Line does not have at least 1 pair of coordinates, has ", strconv.Itoa(len(linewkt.Coordinates)))
+	} else {
+		if linewkt.Coordinates[0].X != 30.0 {
+			t.Error("Expected X to be 30.0 got ", linewkt.Coordinates[0].X)
+		}
+		if linewkt.Coordinates[0].Y != 10.0 {
+			t.Error("Expected Y to be 10.0 got ", linewkt.Coordinates[0].Y)
+		}
+		if linewkt.Coordinates[0].Z != 5.0 {
+			t.Error("Expected X to be 5.0 got ", linewkt.Coordinates[0].Z)
+		}
+		if linewkt.Coordinates[0].M != 10.0 {
+			t.Error("Expected X to be 5.0 got ", linewkt.Coordinates[0].M)
 		}
 	}
 

@@ -4,7 +4,8 @@ Well Known Text API sprang out of a project called Lacuna, which was a 3D web ba
 
 # Current Work in Progress
 
-    * Translate geometries into JSON; full coverage for all common geometry types
+* Translate geometries into JSON; full coverage for all common geometry types
+* Tests for translations
 
 # License
 

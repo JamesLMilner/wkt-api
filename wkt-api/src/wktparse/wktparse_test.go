@@ -4,6 +4,8 @@ import "testing"
 import "strconv"
 import "strings"
 //import "log"
+import "encoding/json"
+import "os"
 
 func TestRemoveWrappingGeom(t *testing.T) {
 	var wktone string
@@ -237,11 +239,41 @@ func TestLineZM(t *testing.T) {
 			t.Error("Expected Y to be 10.0 got ", linewkt.Coordinates[0].Y)
 		}
 		if linewkt.Coordinates[0].Z != 5.0 {
-			t.Error("Expected X to be 5.0 got ", linewkt.Coordinates[0].Z)
+			t.Error("Expected Z to be 5.0 got ", linewkt.Coordinates[0].Z)
 		}
 		if linewkt.Coordinates[0].M != 10.0 {
-			t.Error("Expected X to be 5.0 got ", linewkt.Coordinates[0].M)
+			t.Error("Expected M to be 5.0 got ", linewkt.Coordinates[0].M)
 		}
 	}
+
+}
+
+
+func TestPolygonHoles(t *testing.T) {
+
+	var polygon string = "POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),(20 30, 35 35, 30 20, 20 30))"
+
+	polygontype, polygonwkt := ParseGeometry(polygon)
+
+	if strings.HasPrefix(polygon, "POLYGON") == false {
+		t.Error("String was not prefixed with POLYGON")
+	}
+	if polygontype != "POLYGON" {
+		t.Error("Expected POLYGON got ", polygontype)
+	}
+
+	if len(polygonwkt.Coordinates) < 1 {
+		t.Error("Polygon does not have at least 1 set of coordinates, has ", strconv.Itoa(len(polygonwkt.Coordinates)))
+	} else {
+		if polygonwkt.Coordinates[0].X != 35.0 {
+			t.Error("Expected X to be 35.0 got ", polygonwkt.Coordinates[0].X)
+		}
+		if polygonwkt.Coordinates[0].Y != 10.0 {
+			t.Error("Expected Y to be 10.0 got ", polygonwkt.Coordinates[0].Y)
+		}
+	}
+
+	b, _ := json.MarshalIndent(polygonwkt, "", "    ")
+	os.Stdout.Write(b)
 
 }

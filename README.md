@@ -2,9 +2,10 @@
 
 Well Known Text API sprang out of a project called Lacuna, which was a 3D web based GIS I worked on for my masters dissertation in 2014. The project made me realise how tricky it was to get WKT out of spatial databases and into the clientside.
 
+
 # Current Work in Progress
 
-* Translate geometries into JSON; full coverage for all common geometry types
+* Translate geometries into JSON; full coverage for all common geometry types (Points, Lines, Polygons etc)
 * Tests for translations
 
 # License

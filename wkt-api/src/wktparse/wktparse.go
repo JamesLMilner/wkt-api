@@ -66,8 +66,11 @@ func ParseGeometry(WKTString string) (string, CoordinateSet) {
 	} else if strings.HasPrefix(WKTString, "POLYGON") {
 
 		WKType, Geometries = Polygon(WKTString, "POLYGON")
-		//Geometries = Point(WKTString)
+
 	} else if strings.HasPrefix(WKTString, "MULTIPOINT") {
+
+	//WKType, Geometries = Multipoint(WKTString, "MULTIPOINT")
+
 		//Geometries = Point(WKTString)
 	} else if strings.HasPrefix(WKTString, "MULTILINESTRING") {
 		//Geometries = Point(WKTString)
@@ -83,17 +86,23 @@ func ParseGeometry(WKTString string) (string, CoordinateSet) {
 // POINT (6 10)
 func Point(WKTString string, ParentType string) (string, CoordinateSet) {
 
-	point := strings.Split(RemoveWrappingGeom(WKTString), " ")
-	var coords []float64
-	for _, c := range point {
-		if f, err := strconv.ParseFloat(c, 64); err == nil {
-			coords = append(coords, f)
-		}
-	}
-
+	coordinates := CoordinateSet{}
 	wkttype := GetGeometryType(WKTString, ParentType)
-	coordinateset := GetCoordinate(coords, wkttype)
-	coordinates := CoordinateSet{Coordinates: []Coordinate{coordinateset}}
+
+	if IsNotEmpty(WKTString) {
+
+		point := strings.Split(RemoveWrappingGeom(WKTString), " ")
+		var coords []float64
+		for _, c := range point {
+			if f, err := strconv.ParseFloat(c, 64); err == nil {
+				coords = append(coords, f)
+			}
+		}
+
+		coordinate := GetCoordinate(coords, wkttype)
+		coordinates = CoordinateSet{Coordinates: []Coordinate{coordinate}}
+
+	}
 
 	return wkttype, coordinates
 }
@@ -102,78 +111,17 @@ func Point(WKTString string, ParentType string) (string, CoordinateSet) {
 func Line(WKTString string, ParentType string) (string, CoordinateSet) {
 
 	coordinateset := CoordinateSet{}
-	var wkttype string
+	wkttype := GetGeometryType(WKTString, ParentType)
 
-	wkttype = GetGeometryType(WKTString, ParentType)
+	if IsNotEmpty(WKTString) {
 
-	lineparts := strings.Split(RemoveWrappingGeom(WKTString), ",")
+		lineparts := strings.Split(RemoveWrappingGeom(WKTString), ",")
 
-	// For each part of the line
-	for _, l := range lineparts {
+		// For each part of the line
+		for _, l := range lineparts {
 
-		l = strings.TrimSpace(l)
-		line := strings.Split(l, " ")
-		var coords []float64
-
-		// For each coordinate in the line
-		for _, c := range line {
-			c = strings.TrimSpace(c)
-			if c != " " || c != "" {
-				if f, err := strconv.ParseFloat(c, 64); err == nil {
-					coords = append(coords, f)
-				} else {
-					fmt.Print("Error converting ", c, "to float64", " ", reflect.TypeOf(c), "\n ")
-				}
-			}
-		}
-
-		if (len(coords) > 0) {
-
-			coordinateset.Coordinates = append(coordinateset.Coordinates, GetCoordinate(coords, wkttype))
-
-		} else {
-
-			fmt.Print("Not enough coordinates in this line :", WKTString)
-
-		}
-
-	}
-
-	return wkttype, coordinateset
-}
-
-//POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10), (20 30, 35 35, 30 20, 20 30))
-func Polygon(WKTString string, ParentType string) (string, CoordinateSet) {
-
-	coordinateset := CoordinateSet{}
-	var wkttype string
-
-	wkttype = GetGeometryType(WKTString, ParentType)
-
-	polygonpartsstr := RemoveWrappingGeom(WKTString)
-	polygonparts := []string{}
-
-	if strings.Contains(polygonpartsstr, "),(") {
-
-		polygonparts = strings.Split(polygonpartsstr, "),(") // We remove other brackets later
-
-	} else {
-
-		polygonparts = []string{ polygonpartsstr }
-
-	}
-
-	// For each part of the polgon
-	for _, part := range polygonparts {
-
-		part = RemoveWrappingGeom(part)
-		partslice := strings.Split(part, ",")
-
-		for _, coordstr := range partslice {
-
-			coordstr = strings.TrimSpace(coordstr)
-			coordstr = RemoveAllBrackets(coordstr)
-			line := strings.Split(coordstr, " ")
+			l = strings.TrimSpace(l)
+			line := strings.Split(l, " ")
 			var coords []float64
 
 			// For each coordinate in the line
@@ -188,20 +136,84 @@ func Polygon(WKTString string, ParentType string) (string, CoordinateSet) {
 				}
 			}
 
-			if (len(coords) > 0 && len(coordinateset.Coordinates) < 1) {
+			if (len(coords) > 0) {
 
 				coordinateset.Coordinates = append(coordinateset.Coordinates, GetCoordinate(coords, wkttype))
 
-			} else if (len(coords) > 0 && len(coordinateset.Coordinates) >= 1) {
-
-				coordinateset.Holes =  append(coordinateset.Holes, GetCoordinate(coords, wkttype))
-
 			} else {
+
 				fmt.Print("Not enough coordinates in this line :", WKTString)
+
 			}
 
 		}
 
+	}
+
+	return wkttype, coordinateset
+}
+
+//POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10), (20 30, 35 35, 30 20, 20 30))
+func Polygon(WKTString string, ParentType string) (string, CoordinateSet) {
+
+	coordinateset := CoordinateSet{}
+	wkttype := GetGeometryType(WKTString, ParentType)
+
+	if IsNotEmpty(WKTString) {
+
+		polygonpartsstr := RemoveWrappingGeom(WKTString)
+		polygonparts := []string{}
+
+		if strings.Contains(polygonpartsstr, "),(") {
+
+			polygonparts = strings.Split(polygonpartsstr, "),(") // We remove other brackets later
+
+		} else {
+
+			polygonparts = []string{ polygonpartsstr }
+
+		}
+
+		// For each part of the polgon
+		for _, part := range polygonparts {
+
+			part = RemoveWrappingGeom(part)
+			partslice := strings.Split(part, ",")
+
+			for _, coordstr := range partslice {
+
+				coordstr = strings.TrimSpace(coordstr)
+				coordstr = RemoveAllBrackets(coordstr)
+				line := strings.Split(coordstr, " ")
+				var coords []float64
+
+				// For each coordinate in the line
+				for _, c := range line {
+					c = strings.TrimSpace(c)
+					if c != " " || c != "" {
+						if f, err := strconv.ParseFloat(c, 64); err == nil {
+							coords = append(coords, f)
+						} else {
+							fmt.Print("Error converting ", c, "to float64", " ", reflect.TypeOf(c), "\n ")
+						}
+					}
+				}
+
+				if (len(coords) > 0 && len(coordinateset.Coordinates) < 1) {
+
+					coordinateset.Coordinates = append(coordinateset.Coordinates, GetCoordinate(coords, wkttype))
+
+				} else if (len(coords) > 0 && len(coordinateset.Coordinates) >= 1) {
+
+					coordinateset.Holes =  append(coordinateset.Holes, GetCoordinate(coords, wkttype))
+
+				} else {
+					fmt.Print("Not enough coordinates in this line :", WKTString)
+				}
+
+			}
+
+		}
 	}
 
 	return wkttype, coordinateset
@@ -234,6 +246,8 @@ func GetCoordinate(coords []float64, wkttype string) Coordinate {
 
 }
 
+
+
 func GetGeometryType(WKTString string, ParentType string) string {
 
 	var wkttype string
@@ -260,8 +274,19 @@ func GetGeometryType(WKTString string, ParentType string) string {
 
 }
 
+func IsNotEmpty(str string) bool {
+
+		if strings.Contains(str, "EMPTY")  {
+			return false
+		} else {
+			return true
+		}
+
+}
+
 
 func RemoveWrappingGeom(str string) string {
+
 	if strings.Contains(str, "(") && strings.Contains(str, ")") {
 		return str[strings.Index(str, "(")+1 : strings.LastIndex(str, ")")]
 	} else {
@@ -271,12 +296,16 @@ func RemoveWrappingGeom(str string) string {
 }
 
 func RemoveAllAlphabet(str string) string {
+
 	reg, _ := regexp.Compile("[A-Za-z]")
 	return reg.ReplaceAllString(str, "")
+
 }
 
 func RemoveAllBrackets(str string) string {
+
 	str = strings.Replace(str, "(", "", -1)
 	str = strings.Replace(str, ")", "", -1)
 	return str
+
 }

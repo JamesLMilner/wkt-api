@@ -52,6 +52,20 @@ func TestRemoveAllAlphabet(t *testing.T) {
 	}
 }
 
+func TestIsNotEmpty(t *testing.T) {
+	var point string = "POINT EMPTY"
+	pointtype, pointwkt := ParseGeometry(point)
+
+	if pointtype != "POINT" {
+		t.Error("Expected POINT got", pointtype)
+	}
+
+	if len(pointwkt.Coordinates) != 0 {
+		t.Error("Point should not have any coordinates as it is empty, has the following number of points: ", strconv.Itoa(len(pointwkt.Coordinates)))
+	}
+
+}
+
 // Test Point , Point Z, Point M, Point ZM
 func TestPoint(t *testing.T) {
 	var point string = "POINT(123.45 543.21)"
